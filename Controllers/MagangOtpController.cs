@@ -60,7 +60,7 @@ namespace Backend.Controllers
                     }
                 }
 
-                string formatBarcode = $"{generatedSessionNm};{eventName};-;-;{dbExpired:yyyy-MM-dd HH:mm:ss}";
+                string formatBarcode = $"{generatedSessionNm};{eventName}";
 
                 return Ok(new { 
                     status = true, 
