@@ -18,16 +18,17 @@ namespace Backend.Controllers
         public class VerifyRequestDto
         {
             public int SessionNm { get; set; }
-            public string Niklog { get; set; }
-            public int IdUser { get; set; }
+            public string? Niklog { get; set; }   // Bisa null
+            public int? IdUser { get; set; }      // Bisa null / opsional
         }
 
+        // GET: /api/magangotp/barcode?eventName=Login_ERP
         [HttpGet("barcode")]
-        public async Task<IActionResult> GetBarcode([FromQuery] string eventName, [FromQuery] int idUser)
+        public async Task<IActionResult> GetBarcode([FromQuery] string eventName)
         {
-            if (string.IsNullOrEmpty(eventName) || idUser <= 0)
+            if (string.IsNullOrEmpty(eventName))
             {
-                return BadRequest(new { message = "Parameter eventName dan idUser wajib diisi!" });
+                return BadRequest(new { message = "Parameter eventName wajib diisi!" });
             }
 
             try
@@ -42,12 +43,11 @@ namespace Backend.Controllers
                     string insertQuery = @"
                         INSERT INTO magang_token_log (event, niklog, id_user, expired) 
                         OUTPUT INSERTED.sessionnm, INSERTED.expired 
-                        VALUES (@event, NULL, @idUser, DATEADD(minute, 5, GETDATE()))";
+                        VALUES (@event, NULL, NULL, DATEADD(minute, 5, GETDATE()))";
 
                     using (SqlCommand cmd = new SqlCommand(insertQuery, connection))
                     {
                         cmd.Parameters.AddWithValue("@event", eventName);
-                        cmd.Parameters.AddWithValue("@idUser", idUser);
 
                         using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
                         {
@@ -60,12 +60,11 @@ namespace Backend.Controllers
                     }
                 }
 
-                string formatBarcode = $"{generatedSessionNm};{eventName};-;{idUser};{dbExpired:yyyy-MM-dd HH:mm:ss}";
+                string formatBarcode = $"{generatedSessionNm};{eventName};-;-;{dbExpired:yyyy-MM-dd HH:mm:ss}";
 
                 return Ok(new { 
                     status = true, 
                     sessionnm = generatedSessionNm, 
-                    id_user = idUser,
                     format_barcode = formatBarcode 
                 });
             }
@@ -75,12 +74,13 @@ namespace Backend.Controllers
             }
         }
 
+        // POST: /api/magangotp/verify
         [HttpPost("verify")]
         public async Task<IActionResult> Verify([FromBody] VerifyRequestDto request)
         {
-            if (request.SessionNm <= 0 || string.IsNullOrEmpty(request.Niklog) || request.IdUser <= 0)
+            if (request.SessionNm <= 0)
             {
-                return BadRequest(new { message = "SessionNm, Niklog, dan IdUser wajib diisi!" });
+                return BadRequest(new { message = "SessionNm wajib diisi!" });
             }
 
             try
@@ -93,16 +93,16 @@ namespace Backend.Controllers
 
                     string updateQuery = @"
                         UPDATE magang_token_log 
-                        SET niklog = @niklog 
+                        SET niklog = ISNULL(@niklog, niklog), 
+                            id_user = ISNULL(@id_user, id_user)
                         WHERE sessionnm = @sessionnm 
-                          AND id_user = @id_user 
                           AND expired > GETDATE()";
 
                     using (SqlCommand command = new SqlCommand(updateQuery, connection))
                     {
                         command.Parameters.AddWithValue("@sessionnm", request.SessionNm);
-                        command.Parameters.AddWithValue("@niklog", request.Niklog);
-                        command.Parameters.AddWithValue("@id_user", request.IdUser);
+                        command.Parameters.AddWithValue("@niklog", (object)request.Niklog ?? DBNull.Value);
+                        command.Parameters.AddWithValue("@id_user", (object)request.IdUser ?? DBNull.Value);
 
                         rowsAffected = await command.ExecuteNonQueryAsync();
                     }
@@ -115,14 +115,14 @@ namespace Backend.Controllers
                         sessionnm = request.SessionNm,
                         niklog = request.Niklog,
                         id_user = request.IdUser,
-                        message = $"Verifikasi berhasil: Sesi {request.SessionNm} untuk User {request.IdUser} berhasil di-update!" 
+                        message = $"Verifikasi berhasil: Sesi {request.SessionNm} berhasil di-update!" 
                     });
                 }
                 else
                 {
                     return BadRequest(new { 
                         status = false, 
-                        message = "Gagal update: Kemungkinan SessionNm tidak ditemukan, IdUser tidak cocok, atau token sudah kedaluwarsa (> 5 menit)." 
+                        message = "Gagal update: SessionNm tidak ditemukan atau token sudah kedaluwarsa (> 5 menit)." 
                     });
                 }
             }
