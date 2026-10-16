@@ -3,7 +3,6 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Tambahkan layanan Controller dan Swagger
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
@@ -15,12 +14,10 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
-// Daftarkan MagangOtpService ke Dependency Injection
 builder.Services.AddScoped<MagangOtpService>();
 
 var app = builder.Build();
 
-// Konfigurasi Swagger untuk Development
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger(c =>
@@ -37,7 +34,6 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseAuthorization();
 
-// Memetakan Controller API secara otomatis
 app.MapControllers();
 
 app.Run();

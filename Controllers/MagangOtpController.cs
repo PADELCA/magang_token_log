@@ -22,7 +22,6 @@ namespace Backend.Controllers
             public int IdUser { get; set; }
         }
 
-        // GET: /api/magangotp/barcode?eventName=Login_ERP&idUser=1
         [HttpGet("barcode")]
         public async Task<IActionResult> GetBarcode([FromQuery] string eventName, [FromQuery] int idUser)
         {
@@ -76,7 +75,6 @@ namespace Backend.Controllers
             }
         }
 
-        // POST: /api/magangotp/verify
         [HttpPost("verify")]
         public async Task<IActionResult> Verify([FromBody] VerifyRequestDto request)
         {
@@ -93,7 +91,6 @@ namespace Backend.Controllers
                 {
                     await connection.OpenAsync();
 
-                    // Query update diperhalus (tanpa syarat ketat niklog '-' agar langsung menimpa data yang sesuai sessionnm & id_user)
                     string updateQuery = @"
                         UPDATE magang_token_log 
                         SET niklog = @niklog 

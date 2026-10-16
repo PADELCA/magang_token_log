@@ -12,14 +12,12 @@ namespace Backend.Services
                                 ?? "Server=DESKTOP-166VE2J\\SQLEXPRESS;Database=magang;Trusted_Connection=True;TrustServerCertificate=True;";
         }
 
-        // GET/Generate: Memasukkan data baru ke magang_token_log
         public async Task<string?> GetOrGenerateBarcodeAsync(string eventName, string sessionNm)
         {
             using (SqlConnection connection = new SqlConnection(_connectionString))
             {
                 await connection.OpenAsync();
 
-                // Konversi sessionNm string ke int jika kolom sessionnm di database bertipe int
                 int parsedSessionNm = int.TryParse(sessionNm, out var s) ? s : 1;
 
                 string insertQuery = @"
@@ -51,12 +49,10 @@ namespace Backend.Services
                     }
                 }
 
-                // Format string kembali dikembalikan: id;event;niklog;sessionnm;expired
                 return $"{generatedId};{dbEvent};{dbNiklog};{dbSessionNm};{dbExpired:yyyy-MM-dd HH:mm:ss}";
             }
         }
 
-        // VERIFY & UPDATE: Meng-update niklog berdasarkan ID dan sessionnm yang sesuai
         public async Task<bool> VerifyAndClaimOtpAsync(long id, string niklog, string sessionNm)
         {
             using (SqlConnection connection = new SqlConnection(_connectionString))

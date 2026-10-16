@@ -14,6 +14,6 @@ namespace Backend.Models
     {
         public long Id { get; set; }
         public string Niklog { get; set; }
-        public int IdUser { get; set; } // Server dihilangkan, diganti id_user
+        public int IdUser { get; set; } 
     }
 }
